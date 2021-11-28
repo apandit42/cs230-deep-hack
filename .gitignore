@@ -1,4 +1,7 @@
 # NOTE: This is a very comprehensive file from GitHub. Might have some weird interactions, but should be mostly good.
+# add in custom folders
+nh-vids/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

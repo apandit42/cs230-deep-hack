@@ -1,6 +1,6 @@
 from pathlib import Path
 from .terminal_stream import TerminalStream
-import nethackboost
+from .nethackboost import NetHackBoost
 import nle
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -18,7 +18,7 @@ class NetHackMetricsEnv():
             'ranger-elf': 'ran-elf-cha-mal',
         }
         """
-        self.env = nethackboost.NetHackBoost(character, action_mode)
+        self.env = NetHackBoost(character, action_mode)
         self.action_space_size = self.env.action_space.n
         self.tty_stream = TerminalStream(self.env, save_dir=episodes_dir)
         self.episodes_dir = Path(episodes_dir)

@@ -1,14 +1,24 @@
 from pathlib import Path
 from .terminal_stream import TerminalStream
-import gym
+import nethackboost
 import nle
 import pandas as pd
 import matplotlib.pyplot as plt
 
 class NetHackMetricsEnv():
     # must supply directory to store episodes
-    def __init__(self, episodes_dir, task='NetHackScore-v0'):
-        self.env = gym.make(task)
+    def __init__(self, episodes_dir, character='valkyrie-dwarf', action_mode='reduced'):
+        """
+        Note - Character codes from nethackboost.NetHackBoost
+            # Character strings
+        CHARACTER_CODES = {
+            'valkyrie-dwarf': 'val-dwa-law-fem',
+            'wizard-elf': 'wiz-elf-cha-mal',
+            'cavewoman': 'cav-hum-neu-fem',
+            'ranger-elf': 'ran-elf-cha-mal',
+        }
+        """
+        self.env = nethackboost.NetHackBoost(character, action_mode)
         self.action_space_size = self.env.action_space.n
         self.tty_stream = TerminalStream(self.env, save_dir=episodes_dir)
         self.episodes_dir = Path(episodes_dir)

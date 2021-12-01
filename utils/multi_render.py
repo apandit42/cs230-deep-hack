@@ -39,9 +39,10 @@ def render_worker(payload):
 # render series of PNGs to video
 def render(out_file, frame_counter, chars_stack, colors_stack, cursors_stack, start_frame=0, stop_frame=None, step=1):
     print(f'Settings applied:')
-    print(f'outfile: {out_file}, frame_counter: {frame_counter}, start_frame: {start_frame}, stop_frame: {stop_frame}, and step: {step} ...')
     if stop_frame is None:
-        stop_frame = frame_counter
+        stop_frame = frame_counter if frame_counter <= len(chars_stack) else len(chars_stack)
+    print(f'outfile: {out_file}, frame_counter: {frame_counter}, start_frame: {start_frame}, stop_frame: {stop_frame}, step: {step}')
+    print(f'chars_stack len: {len(chars_stack)}, colors_stack len: {len(colors_stack)}, cursors_stack len: {len(cursors_stack)}')
     start_frame = int(start_frame)
     stop_frame = int(stop_frame)
     step = int(step)

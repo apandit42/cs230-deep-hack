@@ -105,6 +105,7 @@ class TerminalStream():
         self.tty_cursors_stack = []
         self.rewards = []
         self.blstats = []
+        self.frame_counter = 0
 
     def load_data(self, path):
         file_path = Path(path)

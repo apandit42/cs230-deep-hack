@@ -41,6 +41,7 @@ class NetHackMetricsEnv():
         # Set the recorder
         self.tty_stream = TerminalStream(self.env, save_dir=episodes_dir)
         self.episodes_dir = Path(episodes_dir)
+        self.episodes_dict = {}
     
     # init seeds
     def init_seeds(self, seed_csv):
@@ -109,7 +110,7 @@ class NetHackMetricsEnv():
     
     # close, to preserve compatibility
     def close(self):
-        # just calls finish
+        # just calls finish, writes last data
         self.finish()
 
     # render method

@@ -8,6 +8,8 @@ from collections import namedtuple
 import random
 import sys
 import numpy as np
+import re
+import string
 
 
 class NetHackMetricsEnv():
@@ -37,7 +39,7 @@ class NetHackMetricsEnv():
         # Set the recorder
         self.tty_stream = TerminalStream(self.env, save_dir=episodes_dir)
         self.episodes_dir = Path(episodes_dir)
-        self.episodes_dict = {}
+        self.episodes_dict = {'init_episode': -1}
     
     # init seeds
     def init_seeds(self, seed_csv):
@@ -58,7 +60,7 @@ class NetHackMetricsEnv():
     # reset, to preserve compatibility with 
     def reset(self, new_episode_name=None):
         # if this is the first time its being called, don't call finish, otherwise do it
-        if self.episodes_dict:
+        if self.episodes_dict['init_episode'] > -1:
             self.finish()
         # if no new episode name is passed in, use time info
         if new_episode_name is None:
@@ -94,6 +96,18 @@ class NetHackMetricsEnv():
             unicode_str += '\n'
         return unicode_str
     
+    def get_message_menu(self, message_bytes):
+        # Parse into str
+        message_str = self.get_unicode_from_bytes(message_bytes)
+        # Look for menu actions in message prompt, and capture them
+        match_results = re.search(r'\s+\[(?:-)? ?([\$\-a-zA-Z]*) ?(?:or \?\*)?\]', message_str)
+        if match_results:
+            menu_actions = match_results.group(0)
+        
+        # otherwise, look for directions prompt
+        if re.search(r'In what direction\?'):
+            menu_actions = 'kljhunby' # cardinal directions string
+    
     # now, time to get mask
     def get_action_mask(self, obs):
         # define where player stats begin
@@ -122,6 +136,7 @@ class NetHackMetricsEnv():
     # finish, pass up the statistics
     def finish(self):
         summary, run_name = self.tty_stream.finish()
+        self.episodes_dict['init_episode'] += 1
         self.episodes_dict[run_name] = summary
         # make sure to save seeds
         self.episodes_dict[run_name]['core_seed'] = self.core_seed

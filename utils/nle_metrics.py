@@ -32,14 +32,15 @@ class NetHackMetricsEnv():
         ActionSpace = namedtuple('action_space', ['actions_mode', 'n', 'action_list'])
         self.action_space = ActionSpace(actions_mode, self.env.action_space.n, self.env.REDUCED_ACTIONS if actions_mode == 'reduced' else self.env.REDUCED_ACTIONS_WITH_MENU)
 
-        # set the test mode and init seeds
+        # set the test mode and init seeds, init state
         self.init_seeds(seed_csv)
         self.test_mode = test_mode
+        # init won't be complete until first reset or start call
+        self.init_complete = False
 
         # Set the recorder
         self.tty_stream = TerminalStream(self.env, save_dir=episodes_dir)
         self.episodes_dir = Path(episodes_dir)
-        self.episodes_dict = {'init_episode': -1}
     
     # init seeds
     def init_seeds(self, seed_csv):
@@ -59,8 +60,8 @@ class NetHackMetricsEnv():
     
     # reset, to preserve compatibility with 
     def reset(self, new_episode_name=None):
-        # if this is the first time its being called, don't call finish, otherwise do it
-        if self.episodes_dict['init_episode'] > -1:
+        # if init is complete, call finish
+        if self.init_complete:
             self.finish()
         # if no new episode name is passed in, use time info
         if new_episode_name is None:
@@ -69,6 +70,11 @@ class NetHackMetricsEnv():
 
     # must supply a name for an episode
     def start(self, new_episode_name):
+        # if this is the first time calling start, flip init complete flag
+        if not self.init_complete:
+            self.init_complete = True
+
+        # change episode name
         self.episode_name = new_episode_name
 
         # sample from seeds, depending on truth value of test mode
@@ -84,7 +90,32 @@ class NetHackMetricsEnv():
         self.tty_stream.set_run(self.episode_name)
         self.tty_stream.record(self.env, 0)
         return obs
+        
+    # must provide action to step
+    def step(self, action):
+        obs, reward, done, info = self.env.step(action)
+        # new function, for navigating menus
+        obs['mask'] = self.get_action_mask(obs)
+        self.tty_stream.record(self.env, reward)
+        return obs, reward, done, info
+    
+    # finish, pass up the statistics
+    def finish(self):
+        summary, run_name = self.tty_stream.finish()
+        self.episodes_dict[run_name] = summary
+        # make sure to save seeds
+        self.episodes_dict[run_name]['core_seed'] = self.core_seed
+        self.episodes_dict[run_name]['disp_seed'] = self.disp_seed
+    
+    # close, to preserve compatibility
+    def close(self):
+        # just calls finish
+        self.finish()
 
+    # render method
+    def render(self):
+        self.env.render()
+    
     def get_unicode_from_bytes(self, bytes_array):
         unicode_str = ''
         if len(bytes_array.shape) == 2:
@@ -115,33 +146,7 @@ class NetHackMetricsEnv():
         # simple case of no menu navigation
         if self.action_space.actions_mode == 'reduced':
             return np.ones(self.action_space.n)
-        
-    # must provide action to step
-    def step(self, action):
-        obs, reward, done, info = self.env.step(action)
-        # new function, for navigating menus
-        obs['mask'] = self.get_action_mask(obs)
-        self.tty_stream.record(self.env, reward)
-        return obs, reward, done, info
-    
-    # render method
-    def render(self):
-        self.env.render()
-    
-    # close, to preserve compatibility
-    def close(self):
-        # just calls finish
-        self.finish()
-    
-    # finish, pass up the statistics
-    def finish(self):
-        summary, run_name = self.tty_stream.finish()
-        self.episodes_dict['init_episode'] += 1
-        self.episodes_dict[run_name] = summary
-        # make sure to save seeds
-        self.episodes_dict[run_name]['core_seed'] = self.core_seed
-        self.episodes_dict[run_name]['disp_seed'] = self.disp_seed
-    
+
     # write out the pandas summary, and graph
     def write_report(self):
         episodes_df = pd.DataFrame(self.episodes_dict).T

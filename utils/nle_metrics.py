@@ -82,9 +82,22 @@ class NetHackMetricsEnv():
         self.tty_stream.set_run(self.episode_name)
         self.tty_stream.record(self.env, 0)
         return obs
+
+    def get_unicode_from_bytes(self, bytes_array):
+        unicode_str = ''
+        if len(bytes_array.shape) == 2:
+            for i in range(bytes_array.shape[0]):
+                unicode_str += bytes(bytes_array[i,:]).decode('utf-8')
+                unicode_str += '\n'
+        else:
+            unicode_str += bytes(bytes_array).decode('utf-8')
+            unicode_str += '\n'
+        return unicode_str
     
     # now, time to get mask
     def get_action_mask(self, obs):
+        # define where player stats begin
+        stats_row = 22
         # simple case of no menu navigation
         if self.action_space.actions_mode == 'reduced':
             return np.ones(self.action_space.n)

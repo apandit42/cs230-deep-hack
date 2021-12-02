@@ -1,3 +1,9 @@
+"""
+Python Code attained from Facebook at https://github.com/facebookresearch/nle/tree/main/nle/agent
+
+Edited by Eduardo Esteban and Ayush Pandit, in order to run various Hyperparameters, as well 
+as for recording our runs and retaining the statistics at the end of the episodes. 
+"""
 # Copyright (c) Facebook, Inc. and its affiliates.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,6 +29,7 @@ import time
 import timeit
 import traceback
 
+"""Will  tell ou when there is an error"""
 # Necessary for multithreading.
 os.environ["OMP_NUM_THREADS"] = "1"
 
@@ -37,13 +44,15 @@ except ImportError:
         '`pip install "nle[agent]"`'
     )
 
+    
+"""Import for nle. """
 import gym  # noqa: E402
-
 import nle  # noqa: F401, E402
 from nle import nethack  # noqa: E402
 from nle.agent import vtrace  # noqa: E402
 
 # yapf: disable
+"We aren't going to use these flags. Therefore, it is a little unessesary to have them. "
 parser = argparse.ArgumentParser(description="PyTorch Scalable Agent")
 
 parser.add_argument("--env", type=str, default="NetHackScore-v0",
@@ -586,15 +595,24 @@ def train(flags):  # pylint: disable=too-many-branches, too-many-statements
     checkpoint()
     logfile.close()
 
+"""
+Function: test
 
+This function takes care of testing. Takes care of seeds, runs the environment.
+"""
 def test(flags, num_episodes=10):
     flags.savedir = os.path.expandvars(os.path.expanduser(flags.savedir))
     checkpointpath = os.path.join(flags.savedir, "latest", "model.tar")
 
+    """Creates the gym environment, resets it, and starts the NN classificatio"""
     gym_env = create_env(flags.env)
     env = ResettingEnvironment(gym_env)
     model = Net(gym_env.observation_space, gym_env.action_space.n, flags.use_lstm)
     model.eval()
+    """
+    If there is a checkpoint available, then load the model 
+    back up to continue to train it. 
+    """
     checkpoint = torch.load(checkpointpath, map_location="cpu")
     model.load_state_dict(checkpoint["model_state_dict"])
 
@@ -621,6 +639,9 @@ def test(flags, num_episodes=10):
     )
 
 
+"""
+Random class for a random agent. 
+"""
 class RandomNet(nn.Module):
     def __init__(self, observation_shape, num_actions, use_lstm):
         super(RandomNet, self).__init__()
@@ -636,11 +657,13 @@ class RandomNet(nn.Module):
         policy_logits = zeros[None, :].expand(T * B, -1)
         # set baseline to 0
         baseline = policy_logits.sum(dim=1).view(-1, B)
-
-        # sample random action
+        
+        # Sample random action
         action = torch.multinomial(F.softmax(policy_logits, dim=1), num_samples=1).view(
             T, B
         )
+        
+        """Get the probabilities for each action."""
         policy_logits = policy_logits.view(T, B, self.num_actions)
         return (
             dict(policy_logits=policy_logits, baseline=baseline, action=action),
@@ -655,7 +678,9 @@ def _step_to_range(delta, num_steps):
     """Range of `num_steps` integers with distance `delta` centered around zero."""
     return delta * torch.arange(-num_steps // 2, num_steps // 2)
 
-
+"""
+Crop helper function for NetHackNet function
+"""
 class Crop(nn.Module):
     """Helper class for NetHackNet below."""
 
@@ -710,8 +735,13 @@ class Crop(nn.Module):
             .long()
         )
 
+"""
+Class: NetHackNet
 
+Params: nn.Module -> Used to create PyTorch NN our environment. 
+""" 
 class NetHackNet(nn.Module):
+    
     def __init__(
         self,
         observation_shape,
@@ -826,19 +856,30 @@ class NetHackNet(nn.Module):
         # https://github.com/pytorch/pytorch/issues/24912
         out = embed.weight.index_select(0, x.reshape(-1))
         return out.reshape(x.shape + (-1,))
-
+    
+    """
+    Class - NetHackNet
+    
+    Function: forward -> Performs a forward pass for our NN
+    """
     def forward(self, env_outputs, core_state):
+        """
+        The following prepares the data for the forward propuugation. 
+        """
+        """First, Grab the hardcoded values from the states"""
         # -- [T x B x H x W]
         glyphs = env_outputs["glyphs"]
-
         # -- [T x B x F]
         blstats = env_outputs["blstats"]
-
+        
+        """Shape of the input layer, extract T and B"""
         T, B, *_ = glyphs.shape
-
+        
+        """Condense the tensor into a n sized vector"""
         # -- [B' x H x W]
         glyphs = torch.flatten(glyphs, 0, 1)  # Merge time and batch.
-
+        
+        """Not sure what this code does?"""
         # -- [B' x F]
         blstats = blstats.view(T * B, -1).float()
 
@@ -899,7 +940,10 @@ class NetHackNet(nn.Module):
 
         # -- [B x K]
         st = self.fc(st)
-
+        
+        """
+        Use of an LSTM for forward prop? 
+        """
         if self.use_lstm:
             core_input = st.view(T, B, -1)
             core_output_list = []
@@ -915,12 +959,19 @@ class NetHackNet(nn.Module):
             core_output = torch.flatten(torch.cat(core_output_list), 0, 1)
         else:
             core_output = st
-
+        
+        """
+        Calculate the policy values. These policy values will determine the action we should take. 
+        """
         # -- [B x A]
         policy_logits = self.policy(core_output)
         # -- [B x A]
         baseline = self.baseline(core_output)
-
+        
+        """
+        If training, we want to sample those actions that are the highest probability. 
+        Otherwise, we just want to take the maximum probability. 
+        """
         if self.training:
             action = torch.multinomial(F.softmax(policy_logits, dim=1), num_samples=1)
         else:
@@ -936,17 +987,24 @@ class NetHackNet(nn.Module):
             core_state,
         )
 
-
+"""
+Creates a new NetHackNet class. Calls it Net. 
+""" 
 Net = NetHackNet
 
-
+"""
+Main method. Chooses either the training funcntion or the testing funciton. 
+"""
 def main(flags):
     if flags.mode == "train":
         train(flags)
     else:
         test(flags)
-
-
+        
+"""
+Main method for parsing the flags. 
+Used to determine whether we should train or test. 
+"""
 if __name__ == "__main__":
     flags = parser.parse_args()
     main(flags)

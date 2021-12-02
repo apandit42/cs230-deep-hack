@@ -16,7 +16,7 @@ class NetHackBoost(base.NLE):
         nethack.Command.DIP,
         nethack.Command.DROP,
         nethack.Command.EAT,
-        nethack.Command.ESC,
+        nethack.Command.ESC, # leave menu
         nethack.Command.FIRE,
         nethack.Command.FORCE,
         nethack.Command.INVOKE,
@@ -43,7 +43,8 @@ class NetHackBoost(base.NLE):
         nethack.Command.WIELD,
         nethack.Command.WIPE,
         nethack.Command.ZAP,
-        nethack.TextCharacters.SPACE,
+        nethack.TextCharacters.DOLLAR,
+        nethack.TextCharacters.SPACE, # confirm selection
     ]
 
     # MiscDirection

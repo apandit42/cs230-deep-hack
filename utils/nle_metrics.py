@@ -10,6 +10,7 @@ import sys
 import numpy as np
 import re
 import string
+from nle.nethack import Command
 
 
 class NetHackMetricsEnv():
@@ -141,18 +142,55 @@ class NetHackMetricsEnv():
         if match_results:
             menu_actions = match_results.group(0)
             menu_actions = self.expand_alpha_ranges(menu_actions)
+            return list(menu_actions)
         # look to see if menu actions prompting direction are in message prompt, and capture them
         elif re.search(r'In what direction\?'):
             menu_actions = 'kljhunby' # cardinal directions string
-
+            return list(menu_actions)
+        else:
+            return []
     
+    def get_screen_menu(self, tty_chars):
+        # cut down on screen
+        tty_str = self.get_unicode_from_bytes(tty_chars[1:22,20:])
+        inv_key_regex = re.compile(r'([a-zA-Z]) - \w (?:\w+ ?)+')
+        return inv_key_regex.findall(tty_str)
+    
+    # now mask the remaining items
+    def mask_menu_items(self, mask, menu):
+        # get the menu items
+        menu_char_vals = [ord(x) for x in menu]
+        raw_keys_index = [NetHackBoost.RAW_KEY_ACTIONS.index(x) for x in menu_char_vals]
+        # Shift indices over
+        menu_keys_index = np.array(raw_keys_index) + len(NetHackBoost.REDUCED_ACTIONS)
+        # set all commands to 0
+        mask[:] = 0
+        # set menu keys back to 1
+        mask[menu_keys_index] = 1
+        # Now add in space + ESC
+        mask[[NetHackBoost.REDUCED_ACTIONS.index(ord(' ')), NetHackBoost.REDUCED_ACTIONS.index(Command.ESC)]] = 1
+        # return
+        return mask
+
     # now, time to get mask
     def get_action_mask(self, obs):
-        # define where player stats begin
-        stats_row = 22
-        # simple case of no menu navigation
-        if self.action_space.actions_mode == 'reduced':
-            return np.ones(self.action_space.n)
+        # start enabling everything
+        mask = np.ones(self.action_space.n)
+        # enable menu navigation interface with only the with_menu system
+        if self.action_space.actions_mode == 'with_menu':
+            message_menu = self.get_message_menu(obs['message'])
+            # if both of these fail, no masking happens
+            if message_menu:
+                # disable and set commands
+                mask = self.mask_menu_items(mask, message_menu)
+                return mask
+            screen_menu = self.get_screen_menu(obs['tty_chars'])
+            if screen_menu:
+                # disable and set commands
+                mask = self.mask_menu_items(mask, screen_menu)
+                return mask
+        # return the final mask
+        return mask   
 
     # write out the pandas summary, and graph
     def write_report(self):

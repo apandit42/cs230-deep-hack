@@ -1,13 +1,17 @@
 from pathlib import Path
+from datetime import datetime
 from .terminal_stream import TerminalStream
 from .nethackboost import NetHackBoost
-import nle
 import pandas as pd
 import matplotlib.pyplot as plt
+from collections import namedtuple
+import random
+import sys
+
 
 class NetHackMetricsEnv():
     # must supply directory to store episodes
-    def __init__(self, episodes_dir, character='valkyrie-dwarf', action_mode='reduced'):
+    def __init__(self, episodes_dir, character='valkyrie-dwarf', actions_mode='reduced', test_mode=False, seed_csv='seeds.csv'):
         """
         Note - Character codes from nethackboost.NetHackBoost
             # Character strings
@@ -18,15 +22,61 @@ class NetHackMetricsEnv():
             'ranger-elf': 'ran-elf-cha-mal',
         }
         """
-        self.env = NetHackBoost(character, action_mode)
-        self.action_space_size = self.env.action_space.n
+        # Set the environment
+        self.env = NetHackBoost(character=character, actions_mode=actions_mode)
+
+        # setup action space to reflect the same setup as gym nethack
+        ActionSpace = namedtuple('action_space', ['n'])
+        self.action_space = ActionSpace(self.env.action_space.n)
+
+        # set the test mode and init seeds
+        self.init_seeds(seed_csv)
+        self.test_mode = test_mode
+
+        # Set the recorder
         self.tty_stream = TerminalStream(self.env, save_dir=episodes_dir)
         self.episodes_dir = Path(episodes_dir)
         self.episodes_dict = {}
     
+    # init seeds
+    def init_seeds(self, seed_csv):
+        if Path(seed_csv).is_file():
+            seed_csv_df = pd.read_csv(seed_csv)
+        else:
+            # NOTE: Total of 20K seeds, 2 seeds used per run
+            TOTAL_SEEDS = 20000
+            TEST_SEEDS = 1000
+            rng = random.SystemRandom()
+            generated_seeds = [rng.randrange(sys.maxsize) for x in range(TOTAL_SEEDS)]
+            test_seed_idxs = set(random.sample(list(range(TOTAL_SEEDS)), TEST_SEEDS))
+            seed_csv_df = pd.DataFrame({'seed': generated_seeds, 'is_test_seed': [True if i in test_seed_idxs else False for i in range(TOTAL_SEEDS)]})
+            seed_csv_df.to_csv(seed_csv, index=False)
+        # now, just set df
+        self.seed_csv = seed_csv_df
+    
+    # reset, to preserve compatibility with 
+    def reset(self, new_episode_name=None):
+        # if this is the first time its being called, don't call finish, otherwise do it
+        if self.episodes_dict:
+            self.finish()
+        # if no new episode name is passed in, use time info
+        if new_episode_name is None:
+            new_episode_name = datetime.now().strftime('%f%M%S')
+        return self.start(new_episode_name)
+
     # must supply a name for an episode
     def start(self, new_episode_name):
         self.episode_name = new_episode_name
+
+        # sample from seeds, depending on truth value of test mode
+        core_seed, disp_seed = self.seed_csv[self.seed_csv.is_test_seed == self.test_mode].sample(2)
+        # set underlying environment
+        self.env.seed(core=core_seed, disp=disp_seed)
+        # now save those seeds to instance for a bit till finish called
+        self.core_seed = core_seed
+        self.disp_seed = disp_seed
+        
+        # now, new run should be using new seeds
         obs = self.env.reset()
         self.tty_stream.set_run(self.episode_name)
         self.tty_stream.record(self.env, 0)
@@ -42,10 +92,18 @@ class NetHackMetricsEnv():
     def render(self):
         self.env.render()
     
+    # close, to preserve compatibility
+    def close(self):
+        # just calls finish
+        self.finish()
+    
     # finish, pass up the statistics
     def finish(self):
         summary, run_name = self.tty_stream.finish()
         self.episodes_dict[run_name] = summary
+        # make sure to save seeds
+        self.episodes_dict[run_name]['core_seed'] = self.core_seed
+        self.episodes_dict[run_name]['disp_seed'] = self.disp_seed
     
     # write out the pandas summary, and graph
     def write_report(self):

@@ -1,9 +1,6 @@
 # Custom NLE NetHack Environment for OpenAI Gym to improve training
-import gym
-from gym.envs import registration
 from nle.env import base
 from nle import nethack
-from nle.nethack import Command
 import string
 
 
@@ -13,39 +10,39 @@ CUSTOM TASKS - since we're updating the reward functions, this does really need 
 class NetHackBoost(base.NLE):
     # CommandAction
     COMMAND_ACTIONS = [
-        Command.APPLY,
-        Command.CAST,
-        Command.CLOSE,
-        Command.DIP,
-        Command.DROP,
-        Command.EAT,
-        Command.ESC,
-        Command.FIRE,
-        Command.FORCE,
-        Command.INVOKE,
-        Command.KICK,
-        Command.LOOT,
-        Command.OFFER,
-        Command.OPEN,
-        Command.PAY,
-        Command.PICKUP,
-        Command.PRAY,
-        Command.PUTON,
-        Command.QUAFF,
-        Command.QUIVER,
-        Command.READ,
-        Command.REMOVE,
-        Command.RIDE,
-        Command.RUB,
-        Command.SEARCH,
-        Command.TAKEOFF,
-        Command.THROW,
-        Command.TIP,
-        Command.UNTRAP,
-        Command.WEAR,
-        Command.WIELD,
-        Command.WIPE,
-        Command.ZAP,
+        nethack.Command.APPLY,
+        nethack.Command.CAST,
+        nethack.Command.CLOSE,
+        nethack.Command.DIP,
+        nethack.Command.DROP,
+        nethack.Command.EAT,
+        nethack.Command.ESC,
+        nethack.Command.FIRE,
+        nethack.Command.FORCE,
+        nethack.Command.INVOKE,
+        nethack.Command.KICK,
+        nethack.Command.LOOT,
+        nethack.Command.OFFER,
+        nethack.Command.OPEN,
+        nethack.Command.PAY,
+        nethack.Command.PICKUP,
+        nethack.Command.PRAY,
+        nethack.Command.PUTON,
+        nethack.Command.QUAFF,
+        nethack.Command.QUIVER,
+        nethack.Command.READ,
+        nethack.Command.REMOVE,
+        nethack.Command.RIDE,
+        nethack.Command.RUB,
+        nethack.Command.SEARCH,
+        nethack.Command.TAKEOFF,
+        nethack.Command.THROW,
+        nethack.Command.TIP,
+        nethack.Command.UNTRAP,
+        nethack.Command.WEAR,
+        nethack.Command.WIELD,
+        nethack.Command.WIPE,
+        nethack.Command.ZAP,
         nethack.TextCharacters.SPACE,
     ]
 

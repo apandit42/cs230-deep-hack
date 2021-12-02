@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from collections import namedtuple
 import random
 import sys
+import numpy as np
 
 
 class NetHackMetricsEnv():
@@ -26,8 +27,8 @@ class NetHackMetricsEnv():
         self.env = NetHackBoost(character=character, actions_mode=actions_mode)
 
         # setup action space to reflect the same setup as gym nethack
-        ActionSpace = namedtuple('action_space', ['n'])
-        self.action_space = ActionSpace(self.env.action_space.n)
+        ActionSpace = namedtuple('action_space', ['actions_mode', 'n', 'action_list'])
+        self.action_space = ActionSpace(actions_mode, self.env.action_space.n, self.env.REDUCED_ACTIONS if actions_mode == 'reduced' else self.env.REDUCED_ACTIONS_WITH_MENU)
 
         # set the test mode and init seeds
         self.init_seeds(seed_csv)
@@ -69,7 +70,7 @@ class NetHackMetricsEnv():
         self.episode_name = new_episode_name
 
         # sample from seeds, depending on truth value of test mode
-        core_seed, disp_seed = self.seed_csv[self.seed_csv.is_test_seed == self.test_mode].sample(2)
+        core_seed, disp_seed = self.seed_csv[self.seed_csv.is_test_seed == self.test_mode].sample(2).seed
         # set underlying environment
         self.env.seed(core=core_seed, disp=disp_seed)
         # now save those seeds to instance for a bit till finish called
@@ -82,9 +83,17 @@ class NetHackMetricsEnv():
         self.tty_stream.record(self.env, 0)
         return obs
     
+    # now, time to get mask
+    def get_action_mask(self, obs):
+        # simple case of no menu navigation
+        if self.action_space.actions_mode == 'reduced':
+            return np.ones(self.action_space.n)
+        
     # must provide action to step
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
+        # new function, for navigating menus
+        obs['mask'] = self.get_action_mask(obs)
         self.tty_stream.record(self.env, reward)
         return obs, reward, done, info
     

@@ -61,8 +61,8 @@ class NetHackMetricsEnv():
     
     # reset, to preserve compatibility with 
     def reset(self, new_episode_name=None):
-        # if init is complete, call finish
-        if self.init_complete:
+        # if tty_stream actually has data, call finish, otherwise just reset
+        if self.tty_stream.stream_has_data():
             self.finish()
         # if no new episode name is passed in, use time info
         if new_episode_name is None:
@@ -71,10 +71,6 @@ class NetHackMetricsEnv():
 
     # must supply a name for an episode
     def start(self, new_episode_name):
-        # if this is the first time calling start, flip init complete flag
-        if not self.init_complete:
-            self.init_complete = True
-
         # change episode name
         self.episode_name = new_episode_name
 

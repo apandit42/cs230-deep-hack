@@ -123,6 +123,9 @@ class TerminalStream():
         self.blstats += [env.last_observation[self.blstats_idx].copy()]
         self.frame_counter += 1
     
+    def stream_has_data(self):
+        return self.frame_counter > 1
+
     def finish(self):
         # dud run
         if self.frame_counter < 2:

@@ -29,7 +29,7 @@ import time
 import timeit
 import traceback
 
-"""Will  tell ou when there is an error"""
+"""Will  tell you when there is an error"""
 # Necessary for multithreading.
 os.environ["OMP_NUM_THREADS"] = "1"
 

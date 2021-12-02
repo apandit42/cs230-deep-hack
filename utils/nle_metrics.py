@@ -68,7 +68,7 @@ class NetHackMetricsEnv():
             self.finish()
         # if no new episode name is passed in, use time info
         if new_episode_name is None:
-            new_episode_name = datetime.now().strftime('%f%M%S')
+            new_episode_name = datetime.now().strftime('%H-%M-%S')
         return self.start(new_episode_name)
 
     # must supply a name for an episode
@@ -126,6 +126,13 @@ class NetHackMetricsEnv():
             unicode_str += '\n'
         return unicode_str
     
+    def expand_alpha_ranges(self, msg):
+        while '-' in msg:
+            range_start = msg.find('-') - 1
+            range_end = range_start + 2
+            msg = msg[:range_start] + string.ascii_letters[string.ascii_letters.index(msg[range_start]):string.ascii_letters.index(msg[range_end])] + msg[range_end:]
+        return msg
+
     def get_message_menu(self, message_bytes):
         # Parse into str
         message_str = self.get_unicode_from_bytes(message_bytes)
@@ -133,10 +140,11 @@ class NetHackMetricsEnv():
         match_results = re.search(r'\s+\[(?:-)? ?([\$\-a-zA-Z]*) ?(?:or \?\*)?\]', message_str)
         if match_results:
             menu_actions = match_results.group(0)
-        
-        # otherwise, look for directions prompt
-        if re.search(r'In what direction\?'):
+            menu_actions = self.expand_alpha_ranges(menu_actions)
+        # look to see if menu actions prompting direction are in message prompt, and capture them
+        elif re.search(r'In what direction\?'):
             menu_actions = 'kljhunby' # cardinal directions string
+
     
     # now, time to get mask
     def get_action_mask(self, obs):

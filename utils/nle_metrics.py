@@ -14,7 +14,7 @@ import string
 
 class NetHackMetricsEnv():
     # must supply directory to store episodes
-    def __init__(self, episodes_dir, character='valkyrie-dwarf', actions_mode='reduced', test_mode=False, seed_csv='utils/seeds.csv'):
+    def __init__(self, episodes_dir, character='valkyrie-dwarf', actions_mode='reduced', reward_mode='base', test_mode=False, seed_csv='utils/seeds.csv'):
         """
         Note - Character codes from nethackboost.NetHackBoost
             # Character strings
@@ -24,13 +24,15 @@ class NetHackMetricsEnv():
             'cavewoman': 'cav-hum-neu-fem',
             'ranger-elf': 'ran-elf-cha-mal',
         }
+        actions_mode = 'reduced' | 'with_menu' | 'base'
+        reward_mode = 'base' | 'boost'
         """
         # Set the environment
-        self.env = NetHackBoost(character=character, actions_mode=actions_mode)
+        self.env = NetHackBoost(character=character, actions_mode=actions_mode, reward_mode=reward_mode)
 
         # setup action space to reflect the same setup as gym nethack
-        ActionSpace = namedtuple('action_space', ['actions_mode', 'n', 'action_list'])
-        self.action_space = ActionSpace(actions_mode, self.env.action_space.n, self.env.REDUCED_ACTIONS if actions_mode == 'reduced' else self.env.REDUCED_ACTIONS_WITH_MENU)
+        ActionSpace = namedtuple('action_space', ['actions_mode', 'n', 'actions_list'])
+        self.action_space = ActionSpace(actions_mode, self.env.action_space.n, self.env.actions_list)
 
         # set the test mode and init seeds, init state
         self.init_seeds(seed_csv)

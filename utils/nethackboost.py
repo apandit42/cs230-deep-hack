@@ -61,6 +61,9 @@ class NetHackBoost(base.NLE):
     # Reduced Action Space and Menu Navigation
     REDUCED_ACTIONS_WITH_MENU = tuple(COMPASS_ACTIONS + MISC_ACTIONS + COMMAND_ACTIONS + RAW_KEY_ACTIONS)
 
+    # Base Actions
+    BASE_ACTIONS = base.FULL_ACTIONS
+
     # Character strings
     CHARACTER_CODES = {
         'valkyrie-dwarf': 'val-dwa-law-fem',
@@ -70,10 +73,17 @@ class NetHackBoost(base.NLE):
     }
 
     # Create modified environment
-    def __init__(self, character='valkyrie-dwarf', actions_mode='reduced'):
+    def __init__(self, character='valkyrie-dwarf', actions_mode='reduced', reward_mode='base'):
+        # Initialize actions list, which by default is None and uses 79 actions NLE defines as "useful"
+        actions = None
+        if actions_mode == 'reduced':
+            actions = NetHackBoost.REDUCED_ACTIONS
+        elif actions_mode == 'with_menu':
+            actions = NetHackBoost.REDUCED_ACTIONS_WITH_MENU
+        self.actions_list = actions
         super().__init__(
             character = NetHackBoost.CHARACTER_CODES[character],
             max_episode_steps = 60000,
             allow_all_yn_questions = True,
-            actions = NetHackBoost.REDUCED_ACTIONS_WITH_MENU if actions_mode == 'with_menu' else NetHackBoost.REDUCED_ACTIONS,
+            actions = actions,
         )

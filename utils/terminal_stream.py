@@ -4,10 +4,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
-from datetime import datetime
 import sys
 import os
-import nle
 import gym
 
 class TerminalStream():
@@ -256,9 +254,11 @@ class TerminalStream():
             print('\nExiting now!')
             return
 
+
 if __name__ == '__main__':
     # python terminal_stream.py --monitor src_dir dst_dir
     if sys.argv[1] == '--monitor':
+        # just for initialization
         env = gym.make('NetHackScore-v0')
         x = TerminalStream(env)
         x.run_render_monitor(sys.argv[2], sys.argv[3])

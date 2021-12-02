@@ -5,6 +5,8 @@ Testing-DQN-Metrics-1
 Testing-DQN-Metrics-2
 Testing-DQN-Metrics-3
 Testing-DQN-Metrics-4
+DQN/joe-policy
+DQN/joe-target
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

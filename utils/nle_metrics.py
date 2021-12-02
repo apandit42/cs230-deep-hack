@@ -11,7 +11,7 @@ import sys
 
 class NetHackMetricsEnv():
     # must supply directory to store episodes
-    def __init__(self, episodes_dir, character='valkyrie-dwarf', actions_mode='reduced', test_mode=False, seed_csv='seeds.csv'):
+    def __init__(self, episodes_dir, character='valkyrie-dwarf', actions_mode='reduced', test_mode=False, seed_csv='utils/seeds.csv'):
         """
         Note - Character codes from nethackboost.NetHackBoost
             # Character strings

@@ -1,4 +1,8 @@
-# cs230-deep-hack
-CS230 project using reinforcement learning to play NetHack.
+# Hacking NetHack: Novel Reinforcement Learning Architectures for Multi-Objective Optimization
 
-# Ls in the Air
+## Fall 2021 CS230 Project
+Stanford University
+
+Ayush Pandit and Eduardo Esteban
+
+## Joe

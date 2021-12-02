@@ -8,3 +8,5 @@ As well as a more complicated CNN for the Policy function.
 ### DQNBase.ipynb
 
 ### M-DQNBase.ipynb
+
+DQN: 

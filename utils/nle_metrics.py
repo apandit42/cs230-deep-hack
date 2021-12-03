@@ -71,7 +71,7 @@ class NetHackMetricsEnv():
             self.finish()
         # if no new episode name is passed in, use time info
         if new_episode_name is None:
-            new_episode_name = datetime.now().strftime('%H-%M-%S')
+            new_episode_name = datetime.now().strftime('%H-%M-%S-%f')
         return self.start(new_episode_name)
 
     # must supply a name for an episode
@@ -111,8 +111,8 @@ class NetHackMetricsEnv():
     
     # close, to preserve compatibility, will also write graphs
     def close(self):
-        # just calls finish, writes last data
-        self.write_report()
+        # just calls finish, writes last data, reports don't work
+        # self.write_report()
         self.finish()
 
     # render method

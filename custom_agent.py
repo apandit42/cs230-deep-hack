@@ -29,7 +29,6 @@ import time
 import timeit
 import traceback
 
-from torch._C import has_spectral
 
 """Will  tell you when there is an error"""
 # Necessary for multithreading.

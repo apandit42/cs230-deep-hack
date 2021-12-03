@@ -33,6 +33,7 @@ class NetHackMetricsEnv():
         # setup action space to reflect the same setup as gym nethack
         ActionSpace = namedtuple('action_space', ['actions_mode', 'n', 'actions_list'])
         self.action_space = ActionSpace(actions_mode, self.env.action_space.n, self.env.actions_list)
+        self.env.observation_space = self.env.observation_space
 
         # set the test mode and init seeds, init state
         self.init_seeds(seed_csv)
@@ -114,7 +115,7 @@ class NetHackMetricsEnv():
     # render method
     def render(self):
         self.env.render()
-    
+
     def get_unicode_from_bytes(self, bytes_array):
         unicode_str = ''
         if len(bytes_array.shape) == 2:

@@ -51,6 +51,10 @@ import nle  # noqa: F401, E402
 from nle import nethack  # noqa: E402
 from nle.agent import vtrace  # noqa: E402
 
+"""Imports for Ayush's Custom NLE Environment"""
+from utils.terminal_stream import TerminalStream
+from utils.nle_metrics import NetHackMetricsEnv
+
 # yapf: disable
 "We aren't going to use these flags. Therefore, it is a little unessesary to have them. "
 parser = argparse.ArgumentParser(description="PyTorch Scalable Agent")
@@ -68,7 +72,7 @@ parser.add_argument("--savedir", default="~/torchbeast/",
                     help="Root dir where experiment data will be saved.")
 parser.add_argument("--num_actors", default=4, type=int, metavar="N",
                     help="Number of actors (default: 4).")
-parser.add_argument("--total_steps", default=100000, type=int, metavar="T",
+parser.add_argument("--total_steps", default=10, type=int, metavar="T",
                     help="Total environment steps to train for.")
 parser.add_argument("--batch_size", default=8, type=int, metavar="B",
                     help="Learner batch size.")
@@ -147,7 +151,8 @@ def compute_policy_gradient_loss(logits, actions, advantages):
 
 
 def create_env(name, *args, **kwargs):
-    return gym.make(name, observation_keys=("glyphs", "blstats"), *args, **kwargs)
+    #return gym.make(name, observation_keys=("glyphs", "blstats"), *args, **kwargs)
+    return NetHackMetricsEnv('file%s'%name)
 
 
 def act(
@@ -552,6 +557,7 @@ def train(flags):  # pylint: disable=too-many-branches, too-many-statements
         )
 
     timer = timeit.default_timer
+
     try:
         last_checkpoint_time = timer()
         while step < flags.total_steps:
@@ -752,7 +758,7 @@ class NetHackNet(nn.Module):
         num_layers=5,
     ):
         super(NetHackNet, self).__init__()
-
+        print('joe, joe, joe,', observation_shape)
         self.glyph_shape = observation_shape["glyphs"].shape
         self.blstats_size = observation_shape["blstats"].shape[0]
 
@@ -942,7 +948,7 @@ class NetHackNet(nn.Module):
         st = self.fc(st)
         
         """
-        Use of an LSTM for forward prop? 
+        Use of an LSTM for forward prop? Very last layer of the architecture. 
         """
         if self.use_lstm:
             core_input = st.view(T, B, -1)
@@ -970,7 +976,7 @@ class NetHackNet(nn.Module):
         
         """
         If training, we want to sample those actions that are the highest probability. 
-        Otherwise, we just want to take the maximum probability. 
+        Otherwise (i.e. we are testing), we just want to take the maximum probability. 
         """
         if self.training:
             action = torch.multinomial(F.softmax(policy_logits, dim=1), num_samples=1)

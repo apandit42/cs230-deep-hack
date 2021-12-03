@@ -34,7 +34,8 @@ class NetHackMetricsEnv():
         # setup action space to reflect the same setup as gym nethack
         ActionSpace = namedtuple('action_space', ['actions_mode', 'n', 'actions_list'])
         self.action_space = ActionSpace(actions_mode, self.env.action_space.n, self.env.actions_list)
-        self.env.observation_space = self.env.observation_space
+        # Expose observation space for Custom-Agent Model
+        self.observation_space = self.env.observation_space
 
         # set the test mode and init seeds, init state
         self.init_seeds(seed_csv)
@@ -108,9 +109,10 @@ class NetHackMetricsEnv():
         self.episodes_dict[run_name]['core_seed'] = self.core_seed
         self.episodes_dict[run_name]['disp_seed'] = self.disp_seed
     
-    # close, to preserve compatibility
+    # close, to preserve compatibility, will also write graphs
     def close(self):
         # just calls finish, writes last data
+        self.write_report()
         self.finish()
 
     # render method

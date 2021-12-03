@@ -1,0 +1,2 @@
+index,max_depth,max_gold,max_score,max_xp,total_reward,total_timesteps
+Boost-DQN-v0,1.0,2.0,2.0,0.0,2.0,172.0
